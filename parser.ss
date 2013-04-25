@@ -12,11 +12,13 @@
    (false-exp expression?))
   (lambda-exp
    (ids (list-of symbol?))
-   (body expression?))
+   (body (list-of expression?))
+  )
   (let-exp
    (ids (list-of symbol?))
    (vals (list-of expression?))
-   (body (list-of expression?)))
+   (body (list-of expression?))
+  )
   (begin-exp
     (body (list-of expression?))
   )
@@ -27,6 +29,9 @@
   )
   (while-exp
   	(test expression?)
+  	(body (list-of expression?))
+  )
+  (and-exp
   	(body (list-of expression?))
   )
 )
@@ -43,11 +48,19 @@
 	  [(pair? datum)
 	   (cond 
 	   	[(eqv? (car datum) 'lambda)
-		  (lambda-exp (cadr datum)
-			      (parse-expression (caddr datum)))]
+		  	(lambda-exp 
+		  		(cadr datum)
+			    (map parse-expression (cddr datum))
+			)
+		]
 		[(eqv? (car datum) 'exit)
 			(exit-exp
 				(cadr datum)
+			)
+		]
+		[(eqv? (car datum) 'and)
+			(and-exp
+				(map parse-expression (cdr datum))
 			)
 		]
 		[(eqv? (car datum) 'let)
@@ -55,6 +68,9 @@
 			   (map parse-expression (map cadr (cadr datum)))
 			   (map parse-expression (cddr datum))
 			)
+		]
+		[(eqv? (car datum) 'let*)
+			(let-star-parser (cadr datum) (cddr datum))
 		]
 		[(eqv? (car datum) 'set!)
 		  (set-exp (cadr datum) (parse-expression (caddr datum)))]
@@ -85,6 +101,24 @@
 			(map parse-expression datum))])]
 	  [else (eopl:error 'parse-expression
 			    "Invalid concrete syntax ~s" datum)])))
+
+(define let-star-parser
+	(lambda (bindings body)
+		(if (null? bindings)
+			(let-exp
+				(map car bindings)
+				(map parse-expression (map cadr bindings))
+				(map parse-expression body)
+			)
+			(let-exp
+				(map car (list (car bindings)))
+				(map parse-expression (map cadr (list (car bindings))))
+				(list (let-star-parser (cdr bindings) body))
+			)	
+		)
+		
+	)
+)
 
 (define-syntax for
 	(syntax-rules (:)

@@ -3,14 +3,45 @@
 
 (define eval-one-exp
   (lambda (exp)
-    (let* ([parse-tree (parse-expression exp)]
-	   	[response (eval-expression parse-tree (initial-env))])
-      response)))
-
+    (let* (
+	    	[parse-tree (parse-expression exp)]
+	    	[expand-tree (expand-syntax parse-tree)]
+		   	[response (eval-expression expand-tree (initial-env))]
+	   		)
+      response)
+  )
+)
+(define expand-syntax
+	(lambda (exp)
+		(cases expression exp
+			[let-exp (syms vals bodies)
+		    	(app-exp 
+		    		(cons 
+		    			(lambda-exp syms (map expand-syntax bodies))
+				   		(map expand-syntax vals)
+				   	)
+		    	)
+		   	]
+	  ;  		[if-exp (conditional if-true if-false)
+		 ;   		(if-exp (expand-syntax conditional)
+			; 	   (expand-syntax if-true)
+			; 	   (expand-syntax if-false)
+			; 	)
+			; ]
+		 ;   	[app-exp (exps)
+			; 	(app-exp (map expand-syntax exps))
+			; ]
+		 ;   	[lambda-exp (ids bodies)
+			; 	(lambda-exp ids (map expand-syntax bodies))
+			; ]
+		   	[else exp]
+		)
+	)
+)
 
 (define rep
   (lambda ()
-    (display ">> ")
+    (display "KIWI>")
     (let ([input (read)])
       (if (equal? input '(exit))
 	  (printf "Bye...~%")
@@ -96,7 +127,7 @@
   (lambda (procedure args env)
     (cases proc procedure
 	    [closure (ids body env)
-		    (eval-expression body (extend-env ids args env))]
+		    (eval-begin body (extend-env ids args env))]
 	    [primitive (name)
 		      (apply-primitive-procedure name args env)])))
 	   
@@ -108,7 +139,7 @@
 (define-datatype proc proc?
   [closure
    (ids (list-of symbol?))
-   (body expression?)
+   (body (list-of expression?))
    (env pair?)]
   [primitive
    (name symbol?)]
