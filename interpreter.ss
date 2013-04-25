@@ -4,10 +4,8 @@
 (define eval-one-exp
   (lambda (exp)
     (let* ([parse-tree (parse-expression exp)]
-	   [response (eval-expression parse-tree (initial-env))])
+	   	[response (eval-expression parse-tree (initial-env))])
       response)))
-
-
 
 
 (define rep
@@ -41,17 +39,29 @@
 		]
 		[begin-exp (body)
 				(eval-begin body env)
-			]
+		]
 	   	[if-exp (test-exp true-exp false-exp)
 		   (if (eval-expression test-exp env)
 		       (eval-expression true-exp env)
 		       (eval-expression false-exp env))]
     	[lambda-exp (ids body)
-		       (make-closure ids body env)]
+		       (make-closure ids body env)
+		]
+		[while-exp (test body)
+			(whileloop test body env)
+		]
+
 	   	[app-exp (exps)
 		    (let ([vals (eval-expressions exps env)])
 		      (apply-proc (car vals) (cdr vals) env))])))
 
+(define whileloop
+	(lambda (test body env)
+		(if (eval-expression test env)
+			(begin (eval-begin body env) (whileloop test body env))
+		)
+	)
+)
 (define for-proc
 	(lambda (test update return body env)
 		(if (eval-expression test env)
@@ -85,10 +95,10 @@
 (define apply-proc
   (lambda (procedure args env)
     (cases proc procedure
-	   [closure (ids body env)
+	    [closure (ids body env)
 		    (eval-expression body (extend-env ids args env))]
-	   [primitive (name)
-		      (apply-primitive-procedure name args)])))
+	    [primitive (name)
+		      (apply-primitive-procedure name args env)])))
 	   
 
 (define make-closure
@@ -106,7 +116,7 @@
 
 
 (define apply-primitive-procedure
-  	(lambda (name args)
+  	(lambda (name args env)
     	(let 
     		([1st (if (null? args)
 			   '()
@@ -116,10 +126,27 @@
 				   '()
 				   (if (null? (cdr args))
 				       '()
-				       (cadr args)))])
+				       (cadr args)))]
+			  [3rd (if (null? args)
+			  		'()
+			  		(if (null? (cdr args))
+				       '()
+				       (if (null? (cddr args))
+				       		'()
+				       		(caddr args))))
+			  ])
 	      (case name
-			[(+) (+ 1st 2nd)]
-			[(*) (* 1st 2nd)]
+			[(+) (if (null? 2nd)
+					(+ 1st)
+					(if (null? 3rd)
+						(+ 1st 2nd)
+						(+ 1st 2nd 3rd)
+					)
+				)
+			]
+			[(*) (if (null? 2nd)
+					(* 1st)
+					(* 1st 2nd))]
 			[(/) (/ 1st 2nd)]
 			[(-) (if (null? (cdr args))
 				 (- 1st)
@@ -134,8 +161,9 @@
 			[(list) args]
 			[(assq) (assq 1st 2nd)]
 			[(assv) (assv 1st 2nd)]
-			[(map) (map 1st 2nd)]
-			[(apply) (apply 1st 2nd)]
+			[(map) (mapper-fxn 1st 2nd env)]
+			[(apply) (applier-fxn 1st 2nd env)]
+			[(set-car!) (set-car! 1st 2nd)]
 			[(null?) (null? 1st)]
 			[(eq?) (eq? 1st 2nd)]
 			[(display) (display 1st)]
@@ -144,9 +172,26 @@
 	    )
 	)
 )
+(define mapper-fxn
+	(lambda (proc ls env)
+		(if (null? ls)
+			'()
+			(cons  (apply-proc proc (list (car ls)) env) (mapper-fxn proc (cdr ls) env))
+		)
+	)
+)
+(define applier-fxn
+	(lambda (p ls env)
+		(if (null? (cdr ls))
+			(apply-proc p ls env)
+			(apply-proc p (list (car ls) (applier-fxn p (cdr ls) env))  env)
+		)
+	)
+)
+
 
 (define primitive-procedure-names 
-	'(+ - * /  zero? = < <= => > cons car cdr list assq assv map apply null? eq?
+	'(+ - * /  zero? = < <= => > cons car cdr list assq assv map apply set-car! null? eq?
 				    exit display newline)
 )
 
