@@ -22,18 +22,40 @@
 				   	)
 		    	)
 		   	]
-	  ;  		[if-exp (conditional if-true if-false)
-		 ;   		(if-exp (expand-syntax conditional)
-			; 	   (expand-syntax if-true)
-			; 	   (expand-syntax if-false)
-			; 	)
-			; ]
-		 ;   	[app-exp (exps)
-			; 	(app-exp (map expand-syntax exps))
-			; ]
-		 ;   	[lambda-exp (ids bodies)
-			; 	(lambda-exp ids (map expand-syntax bodies))
-			; ]
+	   		[if-exp (conditional if-true if-false)
+		   		(if-exp (expand-syntax conditional)
+				   (expand-syntax if-true)
+				   (expand-syntax if-false)
+				)
+			]
+			[or-exp (body)
+				(if (null? body)
+					(lit-exp #f)
+					(if (null? (cdr body))
+						(expand-syntax (car body))
+						(expand-syntax
+							(let-exp
+								(list 'why?Wollowski)
+								(list (car body))
+								(list (if-exp (var-exp 'why?Wollowski)
+									(var-exp 'why?Wollowski)
+									(or-exp (cdr body))
+								))
+							) 
+							
+						)
+					)
+				)
+			]
+			[and-exp (body)
+				(lit-exp #f)
+			]
+		   	[app-exp (exps)
+				(app-exp (map expand-syntax exps))
+			]
+		   	[lambda-exp (ids bodies)
+				(lambda-exp ids (map expand-syntax bodies))
+			]
 		   	[else exp]
 		)
 	)
@@ -68,6 +90,8 @@
 		[exit-exp (val)
 			val
 		]
+		[and-exp (body) body]
+		[or-exp (body) body]
 		[begin-exp (body)
 				(eval-begin body env)
 		]
