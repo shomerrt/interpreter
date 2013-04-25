@@ -6,38 +6,55 @@
     (let* (
 	    	[parse-tree (parse-expression exp)]
 	    	[expand-tree (expand-syntax parse-tree)]
-		   	[response (eval-expression expand-tree (initial-env))]
-	   		)
+		[response (eval-expression expand-tree (initial-env))]
+		)
       response)
   )
 )
 (define expand-syntax
-	(lambda (exp)
-		(cases expression exp
-			[let-exp (syms vals bodies)
-		    	(app-exp 
-		    		(cons 
-		    			(lambda-exp syms (map expand-syntax bodies))
-				   		(map expand-syntax vals)
-				   	)
-		    	)
-		   	]
-	  ;  		[if-exp (conditional if-true if-false)
-		 ;   		(if-exp (expand-syntax conditional)
-			; 	   (expand-syntax if-true)
-			; 	   (expand-syntax if-false)
-			; 	)
-			; ]
-		 ;   	[app-exp (exps)
-			; 	(app-exp (map expand-syntax exps))
-			; ]
-		 ;   	[lambda-exp (ids bodies)
-			; 	(lambda-exp ids (map expand-syntax bodies))
-			; ]
-		   	[else exp]
-		)
-	)
-)
+  (lambda (exp)
+    (cases expression exp
+	   [let-exp (syms vals bodies)
+		    (app-exp 
+		     (cons 
+		      (lambda-exp syms (map expand-syntax bodies))
+		      (map expand-syntax vals)))]
+	   [if-exp (conditional if-true if-false)
+		   (if-exp (expand-syntax conditional)
+			   (expand-syntax if-true)
+			   (expand-syntax if-false)
+			   )
+		   ]
+					;   	[app-exp (exps)
+					; 	(app-exp (map expand-syntax exps))
+					; ]
+					;   	[lambda-exp (ids bodies)
+					; 	(lambda-exp ids (map expand-syntax bodies))
+					; ]
+	   [and-exp (body)
+		    (cond [(null? body) (lit-exp #t)]
+			  [(if (null? (cdr body)) (expand-syntax (car body))
+			       (expand-syntax (if-exp (car body) (and-exp (cdr body)) (lit-exp #f))))])]
+	   [or-exp (body)
+		   (if (null? body)
+		       (lit-exp #f)
+		       (if (null? (cdr body))
+			   (expand-syntax (car body))
+			   (expand-syntax
+			    (let-exp
+			     (list 'why?Wollowski)
+			     (list (car body))
+			     (list (if-exp (var-exp 'why?Wollowski)
+					   (var-exp 'why?Wollowski)
+					   (or-exp (cdr body))))))))]
+
+;;	   [case-exp (pkey clauses)
+;;		     (if (eqv? 'else)
+;;			 (
+	   [else exp]
+	   )
+    )
+  )
 
 (define rep
   (lambda ()
@@ -54,35 +71,40 @@
 (define eval-expression
   (lambda (exp env)
     (cases expression exp
-	   	[var-exp (id) (apply-env env id)]
+	   [var-exp (id) (apply-env env id)]
            [set-exp (sym val)
 		    (let ([the-val (eval-expression val env)])
 		      (change-env env
 				  sym
 				  the-val))]
-	   	[lit-exp (val) val]
-	   	[let-exp (ids vals body)
+	   [lit-exp (val) val]
+	   [let-exp (ids vals body)
 		    (let* ([evaluated-vals (eval-expressions vals env)]
 			   [extended-env (extend-env ids evaluated-vals env)])
 		      (eval-begin body extended-env))]
-		[exit-exp (val)
-			val
-		]
-		[begin-exp (body)
-				(eval-begin body env)
-		]
-	   	[if-exp (test-exp true-exp false-exp)
+	   [exit-exp (val)
+		     val
+		     ]
+	   [begin-exp (body)
+		      (eval-begin body env)
+		      ]
+	   [if-exp (test-exp true-exp false-exp)
 		   (if (eval-expression test-exp env)
 		       (eval-expression true-exp env)
 		       (eval-expression false-exp env))]
-    	[lambda-exp (ids body)
+	   [lambda-exp (ids body)
 		       (make-closure ids body env)
-		]
-		[while-exp (test body)
-			(whileloop test body env)
-		]
+		       ]
+	   [and-exp (body) body]
+	   [or-exp (body) body]
+	   [case-exp (pkey clauses)]
+	   [cond-exp (tests expr)]
+	   [clause-exp (key body)]
+	   [while-exp (test body)
+		      (whileloop test body env)
+		      ]
 
-	   	[app-exp (exps)
+	   [app-exp (exps)
 		    (let ([vals (eval-expressions exps env)])
 		      (apply-proc (car vals) (cdr vals) env))])))
 

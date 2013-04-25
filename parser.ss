@@ -39,8 +39,12 @@
    (expr (list-of expression?)))
   (case-exp
    (pkey expression?)
-   (keys (list-of expression?))
-   (expr (list-of expression?)))
+   (clauses (list-of expression?)))
+  (clause-exp
+   (key expression?)
+   (body expression?))
+  (or-exp
+   (body (list-of expression?)))
 )
 
 (define scheme-value? (lambda (v) #t))
@@ -65,13 +69,16 @@
 			   (map parse-expression (map cadr (cdr datum))))]
 		[(eqv? (car datum) 'case)
 		 (case-exp  (parse-expression (cadr datum))
-			    (map parse-expression (map car (cddr datum)))
-			    (map parse-expression (map cadr (cddr datum))))]
+			    (map clause-exp 
+			     (map parse-expression (map car (cddr datum)))
+			     (map parse-expression (map cadr (cddr datum)))))]
 		[(eqv? (car datum) 'exit)
 			(exit-exp
 				(cadr datum)
 			)
 		]
+		[(eqv? (car datum) 'or)
+		 (or-exp (map parse-expression (cdr datum)))]
 		[(eqv? (car datum) 'and)
 			(and-exp
 				(map parse-expression (cdr datum))
