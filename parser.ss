@@ -23,7 +23,8 @@
     (body (list-of expression?))
   )
   (app-exp
-   (exps (list-of expression?)))
+   (exps (list-of expression?))
+  )
   (exit-exp
   	(val number?)
   )
@@ -34,10 +35,10 @@
   (and-exp
   	(body (list-of expression?))
   )
-<<<<<<< HEAD
   (cond-exp
    (tests (list-of expression?))
-   (expr (list-of expression?)))
+   (bodies (list-of expression?))
+  )
   (case-exp
    (pkey expression?)
    (clauses (list-of expression?)))
@@ -46,11 +47,6 @@
    (body expression?))
   (or-exp
    (body (list-of expression?)))
-=======
-  (or-exp
-  	(body (list-of expression?))
-  )
->>>>>>> be9adcacd6aad845c144122152798768406c0179
 )
 
 (define scheme-value? (lambda (v) #t))
@@ -71,8 +67,11 @@
 			)
 		]
 		[(eqv? (car datum) 'cond)
-		 (cond-exp (map parse-expression (map car (cdr datum)))
-			   (map parse-expression (map cadr (cdr datum))))]
+		 	(cond-exp 
+		 		(map parse-expression (map car (cdr datum)))
+				(map parse-expression (map cadr (cdr datum)))
+			)
+		 ]
 		[(eqv? (car datum) 'case)
 		 (case-exp  (parse-expression (cadr datum))
 			    (map clause-exp 
