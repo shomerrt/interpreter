@@ -34,6 +34,7 @@
   (and-exp
   	(body (list-of expression?))
   )
+<<<<<<< HEAD
   (cond-exp
    (tests (list-of expression?))
    (expr (list-of expression?)))
@@ -45,6 +46,11 @@
    (body expression?))
   (or-exp
    (body (list-of expression?)))
+=======
+  (or-exp
+  	(body (list-of expression?))
+  )
+>>>>>>> be9adcacd6aad845c144122152798768406c0179
 )
 
 (define scheme-value? (lambda (v) #t))
@@ -81,6 +87,11 @@
 		 (or-exp (map parse-expression (cdr datum)))]
 		[(eqv? (car datum) 'and)
 			(and-exp
+				(map parse-expression (cdr datum))
+			)
+		]
+		[(eqv? (car datum) 'or)
+			(or-exp
 				(map parse-expression (cdr datum))
 			)
 		]

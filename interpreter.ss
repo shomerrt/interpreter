@@ -12,6 +12,7 @@
   )
 )
 (define expand-syntax
+<<<<<<< HEAD
   (lambda (exp)
     (cases expression exp
 	   [let-exp (syms vals bodies)
@@ -55,6 +56,56 @@
 	   )
     )
   )
+=======
+	(lambda (exp)
+		(cases expression exp
+			[let-exp (syms vals bodies)
+		    	(app-exp 
+		    		(cons 
+		    			(lambda-exp syms (map expand-syntax bodies))
+				   		(map expand-syntax vals)
+				   	)
+		    	)
+		   	]
+	   		[if-exp (conditional if-true if-false)
+		   		(if-exp (expand-syntax conditional)
+				   (expand-syntax if-true)
+				   (expand-syntax if-false)
+				)
+			]
+			[or-exp (body)
+				(if (null? body)
+					(lit-exp #f)
+					(if (null? (cdr body))
+						(expand-syntax (car body))
+						(expand-syntax
+							(let-exp
+								(list 'why?Wollowski)
+								(list (car body))
+								(list (if-exp (var-exp 'why?Wollowski)
+									(var-exp 'why?Wollowski)
+									(or-exp (cdr body))
+								))
+							) 
+							
+						)
+					)
+				)
+			]
+			[and-exp (body)
+				(lit-exp #f)
+			]
+		   	[app-exp (exps)
+				(app-exp (map expand-syntax exps))
+			]
+		   	[lambda-exp (ids bodies)
+				(lambda-exp ids (map expand-syntax bodies))
+			]
+		   	[else exp]
+		)
+	)
+)
+>>>>>>> be9adcacd6aad845c144122152798768406c0179
 
 (define rep
   (lambda ()
@@ -82,6 +133,7 @@
 		    (let* ([evaluated-vals (eval-expressions vals env)]
 			   [extended-env (extend-env ids evaluated-vals env)])
 		      (eval-begin body extended-env))]
+<<<<<<< HEAD
 	   [exit-exp (val)
 		     val
 		     ]
@@ -89,6 +141,17 @@
 		      (eval-begin body env)
 		      ]
 	   [if-exp (test-exp true-exp false-exp)
+=======
+		[exit-exp (val)
+			val
+		]
+		[and-exp (body) body]
+		[or-exp (body) body]
+		[begin-exp (body)
+				(eval-begin body env)
+		]
+	   	[if-exp (test-exp true-exp false-exp)
+>>>>>>> be9adcacd6aad845c144122152798768406c0179
 		   (if (eval-expression test-exp env)
 		       (eval-expression true-exp env)
 		       (eval-expression false-exp env))]
