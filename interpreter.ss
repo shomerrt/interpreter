@@ -46,10 +46,13 @@
 			     (list (if-exp (var-exp 'why?Wollowski)
 					   (var-exp 'why?Wollowski)
 					   (or-exp (cdr body))))))))]
-	   [case-exp (pkey keys exprs)
-		     (cond [(eqv? 'else (car keys)) (expand-syntax (car exprs))]
-			   [(member? pkey (car keys)) (expand-syntax (car exprs))]
-			   [else (expand-syntax (case-exp pkey (cdr keys) (cdr exprs)))])]
+	   [case-exp (pkey tests exprs)
+		     (cond [(null? (cdr tests)) (car exprs)]
+			   [else (expand-syntax (if-exp (or-exp (map (lambda (x)
+								       (app-exp (list (var-exp 'eq?) x pkey)))
+								     (car tests)))
+							(car exprs)
+							(case-exp pkey (cdr tests) (cdr exprs))))])]
 	   [cond-exp (tests bodies)
 		     (if (null? (cdr tests))
 			 (if (eqv? 'else (cadr (car tests)))
@@ -235,6 +238,7 @@
 			[(=) (= 1st 2nd)]
 			[(<) (< 1st 2nd)]
 			[(>) (> 1st 2nd)]
+			[(eqv?) (eqv? 1st 2nd)]
 			[(member?) (member? 1st 2nd)]
 			[(cons) (cons 1st 2nd)]
 			[(list) args]
