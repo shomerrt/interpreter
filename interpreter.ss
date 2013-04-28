@@ -68,14 +68,6 @@
 		     ]
 	   [else exp])))
 
-(define case-expand
-  (lambda (test lists bodies env)
-    (cond [(null? lists) '()]
-          [(equal? 'else (car lists))
-           (car bodies)]
-          [(contains? (eval-expression (parse-expression test) env) (car lists)) (car bodies)]
-          [else (case-expand test (cdr lists) (cdr bodies) env)])))
-
 (define member?
   (lambda (x ls)
     (cond [(null? ls) #f]
