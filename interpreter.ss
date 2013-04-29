@@ -111,10 +111,13 @@
 			     (list (if-exp (var-exp 'why?Wollowski)
 					   (var-exp 'why?Wollowski)
 					   (or-exp (cdr body))))))))]
-	   [case-exp (pkey keys exprs)
-		     (cond [(eqv? 'else (car keys)) (expand-syntax (car exprs))]
-			   [(member? pkey (car keys)) (expand-syntax (car exprs))]
-			   [else (expand-syntax (case-exp pkey (cdr keys) (cdr exprs)))])]
+	   [case-exp (pkey tests exprs)
+		     (cond [(null? (cdr tests)) (car exprs)]
+			   [else (expand-syntax (if-exp (or-exp (map (lambda (x)
+								       (app-exp (list (var-exp 'eq?) x pkey)))
+								     (car tests)))
+							(car exprs)
+							(case-exp pkey (cdr tests) (cdr exprs))))])]
 	   [cond-exp (tests bodies)
 		     (if (null? (cdr tests))
 			 (if (eqv? 'else (cadr (car tests)))
@@ -129,14 +132,6 @@
 			 )
 		     ]
 	   [else exp])))
-
-(define case-expand
-  (lambda (test lists bodies env)
-    (cond [(null? lists) '()]
-          [(equal? 'else (car lists))
-           (car bodies)]
-          [(contains? (eval-expression (parse-expression test) env) (car lists)) (car bodies)]
-          [else (case-expand test (cdr lists) (cdr bodies) env)])))
 
 (define member?
   (lambda (x ls)
@@ -346,8 +341,12 @@
 			[(car) (car 1st)]
 			[(zero?) (zero? 1st)]
 			[(=) (= 1st 2nd)]
+			[(cddar) (cddar 1st)]
+;;			[(define) (definer-fxn 1st 2nd env)]
 			[(<) (< 1st 2nd)]
 			[(>) (> 1st 2nd)]
+			[(not) (not 1st)]
+			[(eqv?) (eqv? 1st 2nd)]
 			[(member?) (member? 1st 2nd)]
 			[(cons) (cons 1st 2nd)]
 			[(list) args]
@@ -364,6 +363,9 @@
 	    )
 	)
 )
+;;(define definer-fxn
+;;  (lambda (name proc env)
+;;    (set! name proc)))
 (define mapper-fxn
 	(lambda (proc ls env)
 		(if (null? ls)
@@ -383,7 +385,7 @@
 
 
 (define primitive-procedure-names 
-	'(+ - * /  zero? = < <= => > cons car cdr list assq assv map apply set-car! null? eq?
+	'(+ - * /  zero? = cddar < <= => > not cons car cdr list assq assv map apply set-car! null? eq?
 				    exit display newline)
 )
 

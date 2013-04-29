@@ -46,9 +46,8 @@
    (bodies (list-of expression?)))
 >>>>>>> 11979681019a269adcc50b86c774fcdfb1644df3
   (case-exp
-   (pkey (lambda(x) (or (symbol? x) (number? x) (string? x) (pair? x))))
-;;   (clauses (list-of expression?)))
-   (keys (list-of (lambda (x) (or (symbol? x) (number? x) (string? x) (pair? x)))))
+   (pkey expression?)
+   (tests (list-of (lambda (x) (expression? (car x)))))
    (exprs (list-of expression?)))
   (clause-exp
    (key expression?)
@@ -58,6 +57,12 @@
 )
 
 (define scheme-value? (lambda (v) #t))
+
+(define map-case
+  (lambda (x)
+    (if (eqv? 'else (car x))
+	(list (parse-expression (car x)))
+	(map parse-expression (car x)))))
 
 (define parse-expression
   (lambda (datum)
@@ -79,9 +84,8 @@
 			)
 		 ]
 		[(eqv? (car datum) 'case)
-		 (case-exp  (cadr datum)
-;;			    (map clause-exp 
-			    (map car (cddr datum))
+		 (case-exp  (parse-expression (cadr datum))
+			    (map map-case (cddr datum))			    
 			    (map parse-expression (map cadr (cddr datum))))]
 			    
 		[(eqv? (car datum) 'exit)
