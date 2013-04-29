@@ -33,7 +33,7 @@
    (bodies (list-of expression?)))
   (case-exp
    (pkey expression?)
-   (tests (list-of (lambda (x) (or (expression? (car x)) (symbol? (car x))))))
+   (tests (list-of (lambda (x) (expression? (car x)))))
    (exprs (list-of expression?)))
   (clause-exp
    (key expression?)

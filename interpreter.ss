@@ -228,8 +228,11 @@
 			[(car) (car 1st)]
 			[(zero?) (zero? 1st)]
 			[(=) (= 1st 2nd)]
+			[(cddar) (cddar 1st)]
+;;			[(define) (definer-fxn 1st 2nd env)]
 			[(<) (< 1st 2nd)]
 			[(>) (> 1st 2nd)]
+			[(not) (not 1st)]
 			[(eqv?) (eqv? 1st 2nd)]
 			[(member?) (member? 1st 2nd)]
 			[(cons) (cons 1st 2nd)]
@@ -247,6 +250,9 @@
 	    )
 	)
 )
+;;(define definer-fxn
+;;  (lambda (name proc env)
+;;    (set! name proc)))
 (define mapper-fxn
 	(lambda (proc ls env)
 		(if (null? ls)
@@ -266,7 +272,7 @@
 
 
 (define primitive-procedure-names 
-	'(+ - * /  zero? = < <= => > cons car cdr list assq assv map apply set-car! null? eq?
+	'(+ - * /  zero? = cddar < <= => > not cons car cdr list assq assv map apply set-car! null? eq?
 				    exit display newline)
 )
 
