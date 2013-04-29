@@ -20,31 +20,17 @@
   (begin-exp
    (body (list-of expression?)))
   (app-exp
-<<<<<<< HEAD
-   (exps (list-of expression?))
-  )
-=======
    (expr (list-of expression?)))
->>>>>>> 11979681019a269adcc50b86c774fcdfb1644df3
   (exit-exp
    (val number?))
   (while-exp
    (test expression?)
    (body (list-of expression?)))
   (and-exp
-<<<<<<< HEAD
-  	(body (list-of expression?))
-  )
-  (cond-exp
-   (tests (list-of expression?))
-   (bodies (list-of expression?))
-  )
-=======
    (body (list-of expression?)))
   (cond-exp
    (tests (list-of expression?))
    (bodies (list-of expression?)))
->>>>>>> 11979681019a269adcc50b86c774fcdfb1644df3
   (case-exp
    (pkey expression?)
    (tests (list-of (lambda (x) (expression? (car x)))))
@@ -78,11 +64,8 @@
 		  		(cadr datum)
 			    (map parse-expression (cddr datum)))]
 		[(eqv? (car datum) 'cond)
-		 	(cond-exp 
-		 		(map parse-expression (map car (cdr datum)))
-				(map parse-expression (map cadr (cdr datum)))
-			)
-		 ]
+		 (cond-exp (map parse-expression (map car (cdr datum)))
+			   (map parse-expression (map cadr (cdr datum))))]
 		[(eqv? (car datum) 'case)
 		 (case-exp  (parse-expression (cadr datum))
 			    (map map-case (cddr datum))			    
