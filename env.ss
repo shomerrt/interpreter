@@ -1,35 +1,71 @@
 (define empty-env
-  (lambda ()
-    '()))
+	(lambda ()
+	    '()
+	)
+)
 
 (define extend-env
-  (lambda (syms vals env)
-    (cons (cons syms (list->vector vals)) env)))
+	(lambda (syms vals env)
+		(cons (cons syms (list->vector vals)) env)
+	)
+)
 
 (define apply-env
-  (lambda (env sym)
-    (if (null? env)
-	(eopl:error 'apply-env "No binding for ~s" sym)
-	(let ([syms (caar env)]
-	      [vals (cdar env)]
-	      [env (cdr env)])
-	  (let ((pos (list-find-position sym syms)))
-	    (if (number? pos)
-		(vector-ref vals pos)
-		(apply-env env sym)))))))
+  	(lambda (env sym)
+	    (if (null? env)
+			(apply-global-env sym)
+			(let ([syms (caar env)]
+			      [vals (cdar env)]
+			      [env (cdr env)])
+				(let ((pos (list-find-position sym syms)))
+				    (if (number? pos)
+					(vector-ref vals pos)
+					(apply-env env sym)))
+			)
+		)
+ 	)
+)
+
+(define extend-env-recur
+  (lambda (syms vals env)
+    (let* ([vec (list->vector vals)]
+	   [new-env (cons (cons syms vec) env)])
+      (for-each (lambda (item pos)
+		  (if (proc? item)
+		      (vector-set! vec
+				   pos
+				   (cases proc item
+					  [closure (ids bodies toss-env)
+						   (closure ids bodies new-env)]
+					  [primitive (id)
+						     item]))))
+		vals
+		(make-indices (- (length vals) 1) '()))
+      new-env)))
+
+(define make-indices
+  (lambda (n accu)
+    (if (= n 0)
+	(cons 0 accu)
+	(make-indices (- n 1) (cons n accu)))))
 
 (define change-env
-  (lambda (env sym val)
-    (if (null? env)
-	(eopl:error 'apply-env "No binding for ~s" sym)
-	(let ([syms (caar env)]
-	      [vals (cdar env)]
-	      [env (cdr env)])
-	  (let ((pos (list-find-position sym syms)))
-	    (if (number? pos)
-		(vector-set! vals pos val)
-		(change-env env sym val)))))))
-
+	(lambda (env sym val)
+	    (if (null? env)
+			(change-global-env sym val)
+			(let ([syms (caar env)]
+			      [vals (cdar env)]
+			      [env (cdr env)])
+			  	(let ([pos (list-find-position sym syms)])
+				    (if (number? pos)
+						(vector-set! vals pos val)
+						(change-env env sym val)
+					)
+				)
+			)
+		)
+	)
+)
 
 (define list-find-position
   (lambda (sym los)
@@ -44,3 +80,34 @@
 	     (if (number? list-index-r)
 		 (+ list-index-r 1)
 		 #f))))))
+
+(define change-global-env
+	(lambda (sym body)
+		(if (assv sym global-env)
+			(set-cdr! (assv sym global-env) (list body))
+			(set! global-env (append (list (list sym body)) global-env))
+		)
+	)
+)
+
+(define apply-global-env
+	(lambda (sym)
+		(if (assv sym global-env)
+			(cadr (assv sym global-env))
+			shits
+		)
+		
+	)
+)
+(define global-env
+	'()
+)
+
+(define reset-global-env
+	(lambda ()
+		(set! global-env
+			(map (lambda (x) (list x (primitive x))) primitive-procedure-names)
+		)
+	)
+)
+(reset-global-env)	  
